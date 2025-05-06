@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <title>Tüdrukuteõhtu Viktoriin</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url('pilt.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center;
+      color: #2e4e3f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: -1;
+    }
+    .quiz-container {
+      background: #ffffffcc;
+      border: 2px solid #cde2d0;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 100%;
+    }
+    .question { display: none; }
+    .visible { display: block; }
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+      border: 1px solid #b2c8b4;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #7ca98f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #658b76;
+    }
+    .progress {
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #4e6b5b;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+    .popup-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+    }
+    .popup button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #7ca98f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .popup button:hover {
+      background-color: #658b76;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="quiz"></div>
+  </div>
+
+  <!-- Hüpikaken -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <p id="popupFeedback"></p>
+      <p id="popupInfo"></p>
+      <button onclick="closePopup()">Sulge</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "Mis on Raini meelest olnud kõige meeldejäävam kingitus, mis Sa teinud oled?", answer: "Arvuti klaviatuur" },
+      { question: "Kelle arvamus jääb tüli käigus peale?", answer: "Maili" },
+      { question: "Mis on Raini arvates kõige tobedam põhjus, miks te olete tülitsenud?", answer: "Kelle kahvel on kraanikausis" },
+      { question: "Kes avaldas esimesena armastust?", answer: "Rain" },
+      { question: "Milline oli Raini esimene mulje sinust?", answer: "Tagasihoidlik/raske lugeda" },
+      { question: "Mis on Raini jalanumber?", answer: "47" },
+      { question: "Mis on Raini arvates Sinu kõige tüütum/häirivam harjumus?", answer: "Enesekindlus oma mälus" },
+      { question: "Mis on Rainile kõige südamelähedasem spordiala või hobi?", answer: "Discgolf" },
+      { question: "Mis on tema firmaroog?", answer: "Aeglaselt küpsetatud veiseliha" },
+      { question: "Mis on Raini unistuste reisisihtkoht?", answer: "Tai" },
+      { question: "Mis ajab Raini kohe närvi?", answer: "Hämamine" },
+      { question: "Mis on Raini kõige tüüpilisem ütlus või fraas?", answer: "Deez nuts" },
+      { question: "Kui Rain võidaks lotoga, siis mis oleks esimene asi, mis Ta ostaks?", answer: "Kinnisvara, mida üürida või uuem auto endale (gtr)." },
+      { question: "Milline oli teie esimene kohting?", answer: "Discgolf" },
+      { question: "Millal te kohtusite?", answer: "Koroona alguses", info: "Rain ei mäleta täpset kuupäeva “pls forgive, teised kuupäevad meeles”" },
+      { question: "Mis on Raini jaoks Sinu parim omadus?", answer: "Käitud, mõtled intellektuaalselt" },
+      { question: "Mis oli Raini esimene auto?", answer: "Audi A6" },
+      { question: "Kelleks Rain tahtis lapsena saada?", answer: "Olümpiavõitja ja selle rahaga restorani omanik" },
+      { question: "Mis lemmikloom on Rainil olnud?", answer: "Merisiga" },
+      { question: "Mis on Raini lemmikfilm?", answer: "Kariibi mere piraadid" },
+      { question: "Mis on olnud Raini lemmik koht, kuhu ta on reisinud?", answer: "Kreeka" },
+      { question: "Mis on Raini lemmikvärv?", answer: "Oranž" },
+      { question: "Mis on Raini lemmik bänd või artist?", answer: "Eminem" },
+      { question: "Kui Rain peaks valima ühe toidu, mida Ta saaks igavesti süüa, siis mis see oleks?", answer: "Pizza" }
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    const quizDiv = document.getElementById("quiz");
+    const popup = document.getElementById("popup");
+    const popupFeedback = document.getElementById("popupFeedback");
+    const popupInfo = document.getElementById("popupInfo");
+
+    function showQuestion() {
+      quizDiv.innerHTML = `
+        <div class="progress">Küsimus ${current + 1} / ${questions.length}</div>
+        <div class="question visible">
+          <h2>${questions[current].question}</h2>
+          <input type="text" id="userAnswer" placeholder="Sisesta vastus">
+          <div id="feedback" class="feedback"></div>
+          <button onclick="checkAnswer()">Kontrolli</button>
+        </div>
+      `;
+
+      const inputField = document.getElementById("userAnswer");
+      inputField.focus();
+
+      inputField.addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+          if (popup.style.display === "flex") {
+            closePopup();
+          } else {
+            checkAnswer();
+          }
+        }
+      });
+    }
+
+    function checkAnswer() {
+      const userInput = document.getElementById("userAnswer").value.trim().toLowerCase();
+      const correctAnswer = questions[current].answer.trim().toLowerCase();
+
+      if (userInput === correctAnswer) {
+        popupFeedback.innerHTML = `<strong style="color: #658b76;">🎉 Õige!</strong>`;
+        popupFeedback.className = "feedback correct";
+        score++;
+      } else {
+        popupFeedback.innerHTML = `❌ Vale. Õige vastus on: <strong style="color: #658b76;">${questions[current].answer}</strong>`;
+        popupFeedback.className = "feedback incorrect";
+      }
+
+      if (questions[current].info) {
+        popupInfo.innerHTML = questions[current].info;
+      } else {
+        popupInfo.innerHTML = "";
+      }
+
+      popup.style.display = "flex";
+    }
+
+    function closePopup() {
+      popup.style.display = "none";
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      current++;
+      if (current < questions.length) {
+        showQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      quizDiv.innerHTML = `
+        <h2>Tulemus</h2>
+        <p>Sa said ${score} / ${questions.length} õigesti!</p>
+        <button onclick="restartQuiz()">Alusta uuesti</button>
+      `;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>
